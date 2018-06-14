@@ -141,8 +141,8 @@ def main(options=None): # Do the thing
         '--add-options',
         dest = 'add_options',
         metavar = '"OPTIONS"',
-        help = ('Boot options to add to the configuration '
-               '(if they aren\'t already present)')
+        help = 'Boot options to add to the configuration ' +
+               '(if they aren\'t already present)'
    )
 
     parser.add_argument(
@@ -155,8 +155,8 @@ def main(options=None): # Do the thing
         '--delete-options',
         dest = 'remove_options',
         metavar = '"OPTIONS"',
-        help = ('Boot options to remove from the configuration ',
-                '(if they\'re present already)')
+        help = 'Boot options to remove from the configuration ' +
+                '(if they\'re present already)'
     )
 
     parser.add_argument(
