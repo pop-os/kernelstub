@@ -13,8 +13,23 @@ new kernel versions are installed).
 
 Installation can be handled through the supplied Debian packaging as well as the
 python packaging. If kernelstub is packaged in your distro's repositories, you
-can install kernelstub through the `kernelstub` package. To build a debian
-package locally, use these commands:
+can install kernelstub through the `kernelstub` package. 
+
+To build a debian package locally, first install the build dependencies. On 
+Pop_OS, you can install the build dependencies using this command:
+```
+sudo apt build-dep kernelstub
+```
+
+Otherwise, you will need to install the following packages:
+```
+python3-all
+pyflakes3
+debhelper (>= 7.4.3)
+dh-python
+```
+
+Then use these commands to build the package:
 ```
 git clone https://github.com/isantop/kernelstub
 cd kernelstub
