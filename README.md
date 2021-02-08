@@ -26,7 +26,7 @@ packaging, use:
 ```
 git clone https://github.com/isantop/kernelstub
 cd kernelstub
-sudo python3 setup.py install --record > installed_files.txt
+sudo python3 setup.py install --record=installed_files.txt
 ```
 For your convenience, this will create a list of all files installed on the
 system in the `installed_files.txt` file, so that you can easily remove the
