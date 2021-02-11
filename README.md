@@ -16,7 +16,7 @@ python packaging. If kernelstub is packaged in your distro's repositories, you
 can install kernelstub through the `kernelstub` package. 
 
 To build a debian package locally, first install the build dependencies. On 
-Pop_OS, you can install the build dependencies using this command:
+Pop!\_OS, you can install the build dependencies using this command:
 ```
 sudo apt build-dep kernelstub
 ```
@@ -33,7 +33,7 @@ Then use these commands to build the package:
 ```
 git clone https://github.com/isantop/kernelstub
 cd kernelstub
-debuild -b -us -uc
+dpkg-buildpackage -b -us -uc
 sudo dpkg -i ../kernelstub*.deb
 ```
 For installation on non-debian systems, or if you prefer to use Python
