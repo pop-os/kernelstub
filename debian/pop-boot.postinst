@@ -2,7 +2,7 @@
 
 DISTRO_EFI_PATH=/boot/efi
 DISTRO_LOADER_CONF_PATH=$DISTRO_EFI_PATH/loader/loader.conf
-DISTRO_DFAULT_KERNEL_OPTIONS=quiet splash loglevel=0
+DISTRO_DEFAULT_KERNEL_OPTIONS=quiet splash loglevel=0
 
 if [ ! -f $DISTRO_LOADER_CONF_PATH ]; then
 	kernelstub \
