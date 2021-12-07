@@ -39,7 +39,8 @@ class Config():
             'manage_mode': False,
             'force_update' : False,
             'live_mode' : False,
-            'config_rev' : 3
+            'unified_kernel': False,
+            'config_rev' : 4
         }
     }
 
@@ -107,7 +108,7 @@ class Config():
 
         with open(path, mode='w') as config_file:
             json.dump(self.config, config_file, indent=2)
-        
+
         self.log.debug('Configuration saved!')
         return 0
 
@@ -120,8 +121,11 @@ class Config():
                 config['user']['kernel_options'] = self.parse_options(config['user']['kernel_options'].split())
             if type(config['default']['kernel_options']) is str:
                 config['default']['kernel_options'] = self.parse_options(config['default']['kernel_options'].split())
-        config['user']['config_rev'] = 3
-        config['default']['config_rev'] = 3
+        if config['user']['config_rev'] < 4:
+            config['user']['unified_kernel'] = False
+            config['default']['unified_kernel'] = False
+        config['user']['config_rev'] = 4
+        config['default']['config_rev'] = 4
         return config
 
     def parse_options(self, options):
