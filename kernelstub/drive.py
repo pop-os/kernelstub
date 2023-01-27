@@ -49,6 +49,8 @@ class Drive():
         self.log.debug('root path = %s' % self.root_path)
         self.log.debug('esp_path = %s' % self.esp_path)
 
+        # If the esp partion is an autofs mount, listdir will trigger a mount.
+        os.listdir(esp_path)
         self.mtab = self.get_drives()
 
         try:
@@ -83,15 +85,34 @@ class Drive():
         self.log.debug(mtab)
         return mtab
 
-    def get_part_dev(self, path):
-        self.log.debug('Getting the block device file for %s' % path)
+    def get_mtab_entry(self, path):
+        self.log.debug('Getting mtab entry for %s' % path)
         for mount in self.mtab:
             drive = mount.split(" ")
-            if drive[1] == path:
-                part_dev = os.path.realpath(drive[0])
-                self.log.debug('%s is on %s' % (path, part_dev))
-                return part_dev
-        raise NoBlockDevError('Couldn\'t find the block device for %s' % path)
+            if drive[1] == path and drive[2] != 'autofs':
+                return drive
+        raise NoBlockDevError('Couldn\'t find the mtab entry for %s' % path)
+
+    def get_part_dev(self, path):
+        self.log.debug('Getting the block device file for %s' % path)
+        mtab_entry = self.get_mtab_entry(path)
+        part_dev = os.path.realpath(mtab_entry[0])
+        self.log.debug('%s is on %s' % (path, part_dev))
+        return part_dev
+
+    def get_part_fs(self, path):
+        self.log.debug('Getting the filesystem type for %s' % path)
+        mtab_entry = self.get_mtab_entry(path)
+        fstype = mtab_entry[2]
+        self.log.debug('%s is on %s filesystem' % (path, fstype))
+        return fstype
+
+    def get_part_options(self, path):
+        self.log.debug('Getting the mount options for %s' % path)
+        mtab_entry = self.get_mtab_entry(path)
+        options = mtab_entry[3]
+        self.log.debug('Mount options for %s are %s' % (path, options))
+        return options
 
     def get_drive_dev(self, esp):
         # Ported from bash, out of @jackpot51's firmware updater

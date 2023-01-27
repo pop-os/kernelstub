@@ -322,7 +322,23 @@ class Kernelstub():
 
         log.debug('Setting up boot...')
 
-        kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, " ".join(kernel_opts))
+        # There is no point in mounting a btrfs filesystem read only,
+        # fsck is not necessary so mount it read write.
+        fstype = drive.get_part_fs(root_path)
+        rw_opt = 'ro'
+        fstab_opt = ''
+        if fstype == 'btrfs':
+            rw_opt = 'rw'
+            # Add the rootfs mount options to the kernel options.
+            # This saves a remount at boot, since everything is done in the initrd now.
+            options = drive.get_part_options(root_path).split(',')
+            for option in list(options):
+                if option == 'rw' or option == 'ro' or option.startswith('subvolid='):
+                    options.remove(option)
+
+            fstab_opt = 'rootflags=' + ','.join(options)
+
+        kopts = 'root=UUID=%s %s %s %s' % (drive.root_uuid, rw_opt, fstab_opt, " ".join(kernel_opts))
         log.debug('kopts: %s' % kopts)
 
 
