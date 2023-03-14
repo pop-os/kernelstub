@@ -22,7 +22,7 @@ Please see the provided LICENSE.txt file for additional distribution/copyright
 terms.
 """
 
-import os, shutil, logging, platform, gzip
+import os, shutil, logging, platform, gzip, subprocess
 
 from pathlib import Path
 
@@ -58,6 +58,83 @@ class Installer():
         if not os.path.exists(self.entry_dir):
             os.makedirs(self.entry_dir)
 
+    def setup_unified_kernel(self, kernel_opts, old=False, overwrite=False, simulate=False):
+        if old:
+            suffix = 'previous'
+            kernel_path = self.opsys.old_kernel_path
+            initrd_path = self.opsys.old_initrd_path
+        else:
+            suffix = 'current'
+            kernel_path = self.opsys.kernel_path
+            initrd_path = self.opsys.initrd_path
+
+        tmp_dir = os.path.join('/tmp/kernelstub', suffix)
+        self.ensure_dir(tmp_dir, simulate=simulate)
+
+        cmdline_path = os.path.join(tmp_dir, 'cmdline')
+        if simulate:
+            self.log.info('Simulate creating file: %s with contents %s' % (cmdline_path, kernel_opts))
+        else:
+            with open(cmdline_path, mode='w') as f:
+                f.write(kernel_opts)
+
+        self.log.info('Creating unified Linux EFI executable (%s)' % (suffix))
+        kernel_unsigned_efi_path = os.path.join(tmp_dir, 'linux-unsigned.efi')
+        objcopy = [
+            'objcopy',
+            '--add-section', '.osrel=/usr/lib/os-release', '--change-section-vma', '.osrel=0x20000',
+            '--add-section', '.cmdline=' + cmdline_path, '--change-section-vma', '.cmdline=0x30000',
+            '--add-section', '.linux=' + kernel_path, '--change-section-vma', '.linux=0x2000000',
+            '--add-section', '.initrd=' + initrd_path, '--change-section-vma', '.initrd=0x3000000',
+            '/usr/lib/systemd/boot/efi/linuxx64.efi.stub', kernel_unsigned_efi_path
+        ]
+        if simulate:
+            self.log.info('Simulate running command: %s' % (objcopy))
+        else:
+            subprocess.check_call(objcopy)
+
+        sign_crt = '/etc/kernelstub/mok.crt'
+        sign_key = '/etc/kernelstub/mok.key'
+        if os.path.exists(sign_crt) and os.path.exists(sign_key):
+            self.log.info('Signing unified Linux EFI executable (%s)' % (suffix))
+            kernel_signed_efi_path = os.path.join(tmp_dir, 'signed.efi')
+            sbsign = [
+                'sbsign',
+                '--cert', sign_crt,
+                '--key', sign_key,
+                '--output', kernel_signed_efi_path,
+                kernel_unsigned_efi_path
+            ]
+            if simulate:
+                self.log.info('Simulate running command: %s' % (sbsign))
+            else:
+                subprocess.check_call(sbsign)
+            kernel_efi_path = kernel_signed_efi_path
+        else:
+            kernel_efi_path = kernel_unsigned_efi_path
+
+        self.log.info('Copying unified Linux EFI executable to ESP (%s)' % (suffix))
+        kernel_efi_dest_dir = os.path.join(self.work_dir, 'Linux')
+        self.ensure_dir(kernel_efi_dest_dir, simulate=simulate)
+        kernel_efi_name = self.opsys.name + '-' + suffix + '-' + self.drive.root_uuid + '.efi'
+        kernel_efi_dest = os.path.join(kernel_efi_dest_dir, kernel_efi_name)
+        self.copy_files(
+            kernel_efi_path,
+            kernel_efi_dest,
+            simulate=simulate
+        )
+
+        if not overwrite and not simulate:
+            if not os.path.exists('%s/loader.conf' % self.loader_dir):
+                overwrite = True
+
+        if overwrite and not old and not simulate:
+            self.ensure_dir(self.loader_dir)
+            with open(
+                '%s/loader.conf' % self.loader_dir, mode='w') as loader:
+
+                default_line = 'default %s\n' % kernel_efi_name
+                loader.write(default_line)
 
     def backup_old(self, kernel_opts, setup_loader=False, simulate=False):
         self.log.info('Backing up old kernel')

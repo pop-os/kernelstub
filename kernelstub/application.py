@@ -243,6 +243,11 @@ class Kernelstub():
         if args.off_loader:
             configuration['setup_loader'] = False
 
+        if args.setup_unified:
+            configuration['unified_kernel'] = True
+        if args.off_unified:
+            configuration['unified_kernel'] = False
+
         if args.install_stub:
             configuration['manage_mode'] = False
         if args.manage_mode:
@@ -316,6 +321,7 @@ class Kernelstub():
                 '   ESP Location:..................%s\n' % configuration['esp_path'] +
                 '   Management Mode:...............%s\n' % configuration['manage_mode'] +
                 '   Install Loader configuration:..%s\n' % configuration['setup_loader'] +
+                '   Unified kernel:................%s\n' % configuration['unified_kernel'] +
                 '   Configuration version:.........%s\n' % configuration['config_rev'])
             log.info('Configuration details: \n\n%s' % all_config)
             exit(0)
@@ -325,25 +331,42 @@ class Kernelstub():
         kopts = 'root=UUID=%s ro %s' % (drive.root_uuid, " ".join(kernel_opts))
         log.debug('kopts: %s' % kopts)
 
-
-
-        installer.setup_kernel(
-            kopts,
-            setup_loader=setup_loader,
-            overwrite=force,
-            simulate=no_run)
-        try:
-            installer.backup_old(
+        if configuration['unified_kernel']:
+            installer.setup_unified_kernel(
+                kopts,
+                old=False,
+                overwrite=force,
+                simulate=no_run
+            )
+            try:
+                installer.setup_unified_kernel(
+                    kopts,
+                    old=True,
+                    overwrite=force,
+                    simulate=no_run)
+            except Exception as e:
+                log.debug('Couldn\'t back up old kernel. \nThis might just mean ' +
+                          'You don\'t have an old kernel installed. If you do, try ' +
+                          'with -vv to see debuging information')
+                log.debug(e)
+        else:
+            installer.setup_kernel(
                 kopts,
                 setup_loader=setup_loader,
+                overwrite=force,
                 simulate=no_run)
-        except Exception as e:
-            log.debug('Couldn\'t back up old kernel. \nThis might just mean ' +
-                      'You don\'t have an old kernel installed. If you do, try ' +
-                      'with -vv to see debuging information')
-            log.debug(e)
+            try:
+                installer.backup_old(
+                    kopts,
+                    setup_loader=setup_loader,
+                    simulate=no_run)
+            except Exception as e:
+                log.debug('Couldn\'t back up old kernel. \nThis might just mean ' +
+                          'You don\'t have an old kernel installed. If you do, try ' +
+                          'with -vv to see debuging information')
+                log.debug(e)
 
-        installer.copy_cmdline(simulate=no_run)
+            installer.copy_cmdline(simulate=no_run)
 
         if not manage_mode:
             installer.setup_stub(kopts, simulate=no_run)

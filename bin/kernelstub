@@ -50,6 +50,7 @@ def main(options=None): # Do the thing
         description = "Automatic Kernel EFIstub manager")
     loader_stub = parser.add_mutually_exclusive_group()
     install_loader = parser.add_mutually_exclusive_group()
+    install_unified = parser.add_mutually_exclusive_group()
 
     parser.add_argument(
         '-c',
@@ -186,6 +187,19 @@ def main(options=None): # Do the thing
         action = 'store_true',
         dest = 'off_loader',
         help = 'Turns off creating loader configuration'
+    )
+
+    install_unified.add_argument(
+        '--unified',
+        action = 'store_true',
+        dest = 'setup_unified',
+        help = 'Creates a unified kernel executable'
+    )
+    install_unified.add_argument(
+        '--no-unified',
+        action = 'store_true',
+        dest = 'off_unified',
+        help = 'Turns off creating unified kernel executable'
     )
 
     loader_stub.add_argument(
