@@ -83,6 +83,7 @@ setup(name='kernelstub',
     scripts=['bin/kernelstub'],
     cmdclass={'test': Test},
     data_files=[
+        ("/usr/lib/kernel/install.d", ["data/kernel/90-kernelstub.install"]),
         ('/etc/kernel/postinst.d', ['data/kernel/zz-kernelstub']),
         ('/etc/initramfs/post-update.d', ['data/initramfs/zz-kernelstub']),
         ('/etc/default', ['data/config/kernelstub.SAMPLE'])]
