@@ -1,0 +1,15 @@
+#!/bin/bash
+export LANG=C
+COMMAND="$1"
+KERNEL_VERSION="$2"
+case "${COMMAND}" in
+    add)
+        KERNEL="/boot/vmlinuz-${KERNEL_VERSION}"
+        INITRD="/boot/initramfs-${KERNEL_VERSION}.img"
+        kernelstub --verbose --preserve-live-mode
+        ;;
+    remove)
+        exit 0
+        ;;
+esac
+exit 0
